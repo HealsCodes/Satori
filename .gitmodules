@@ -1,0 +1,3 @@
+[submodule "satori/3rdParty/SleekXMPP"]
+	path = satori/3rdParty/SleekXMPP
+	url = http://github.com/fritzy/SleekXMPP.git

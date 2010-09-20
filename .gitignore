@@ -1,0 +1,10 @@
+.DS_*
+*.pyc
+.*.sw?
+Satori.egg-info/
+build/
+develop/
+dist/
+^satori-mb.conf
+tests/data/misc
+doc/_build

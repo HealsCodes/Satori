@@ -139,6 +139,7 @@ class Core(object):
         
         if services:
             services = 'Message was handled by {0}'.format(services)
+            mfrom = self._make_room_user(event['from'], 'Satori')
             self._xmpp.sendMessage(event['from'], None, services, 'groupchat', None, mfrom)
         
     def _on_presence(self, event):

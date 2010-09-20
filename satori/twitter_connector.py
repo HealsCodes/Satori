@@ -156,10 +156,10 @@ class TwitterConnector(object):
         try:
             if self._account_data.state != '0':
                 user_msgs = self._api.home_timeline(long(status_ids[0]))
-                user_dms = self._api.direct_messages(long(status_ids[1]))
+                #user_dms = self._api.direct_messages(long(status_ids[1]))
             else:
                 user_msgs = self._api.home_timeline()
-                user_dms = self._api.direct_messages()
+                #user_dms = self._api.direct_messages()
                 
         except tweepy.TweepError, e:
             core.send_room_message(self._jid, None, '{0}: {1}'.format(self._service_data['tag'], str(e)))

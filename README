@@ -1,0 +1,55 @@
+        ____     __           _ 
+       / __/__ _/ /____  ____(_)
+     _\ \/ _ `/ __/ _ \/ __/ /
+    /___/\_,_/\__/\___/_/ /_/
+
+Satori is a XMPP component which allows you
+to view your twitter timeline and post status updates,
+replies and DMs in a unique multi user chat room emulation.
+
+The driving force behind Satori was the lack of a decent XMPP
+bot for micro blogging (mainly twitter).
+
+In the current implementation the following features are available:
+
+    * frustration free server integration as a XMPP component
+    * API backend for twitter/identi.ca using Basic- and oAuth
+    * display home timeline as a multi-user chatroom
+    * display people you follow as chatroom users
+    * support for timeline updates
+    * support for generic @replies
+    * support for @replies to a specific status
+    * retweet or favor tweets
+    * block users / report them for spamming
+    
+There are more features planned but not fully available right now:
+
+    * [todo] allow direct messages by starting a private conversation
+    * [todo] configuration wizard for service registration / management
+    * [todo] integration with other micro blogging services (like tumbler, ...)
+
+=== Mandatory license ===
+
+Satori is Copyright (c) 2010 René Köcher < shirk@bitspin.org >
+All rights reserved.
+  
+Redistribution and use in source and binary forms, with or without modifica-
+tion, are permitted provided that the following conditions are met:
+  
+  1.  Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+  
+  2.  Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+  
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MER-
+CHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO
+EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPE-
+CIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR   PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF  LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTH-
+ERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.

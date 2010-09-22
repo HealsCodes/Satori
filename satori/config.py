@@ -84,7 +84,27 @@ class _SatoriCoreConfig(_BaseConfig):
         self.port = self.settings.get('port', 5347)
         self.secret = self.settings.get('secret', 'secret')
         self.register_ok = self.settings.get('allowRegister', True)
-                
+        
+        if getattr(self, 'services', None):
+            for service in self.services:
+                for key in ['tag', 'type', 'useHttps', 'apiHost', 'apiRoot']:
+                    if not key in service:
+                        raise RuntimeError('Missing "{0}" in service definition'.format(key))
+                if service['type'] == 'twitter_oAuth':
+                    for key in ['oAuthRoot', 'oAuthKey', 'oAuthSecret']:
+                        if not key in service:
+                            raise RuntimeError('Missing "{0}" in service definition for "{1}"'.format(key, service['tag']))
+                elif service['type'] == 'twitter_BasicAuth':
+                        pass
+                else:
+                    raise RuntimeError('Unknown service type "{0}" in service definition for "{1}"').format(service['type'], service['tag'])
+        
+                for (key, default) in [('useHttps', False), 
+                                       ('searchRoot', None),
+                                       ('searchHost', None)]:
+                    if not key in service:
+                        service[key] = default
+        
         return self
     
 class Config(object):

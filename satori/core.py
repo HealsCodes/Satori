@@ -29,6 +29,7 @@
 
 import sys
 import os
+import traceback
 from supay import Daemon
 from xml.etree import cElementTree as ET
 
@@ -44,6 +45,7 @@ class Core(object):
         self._config = Config.get().core
         self._book_keeper = BookKeeper(os.path.join(self._config.spool, 
                                                     'bookkeeper.db'))
+        self._book_keeper.reflect_services(self._config)
         self._room_map = {}
         self._xmpp = sleekxmpp.componentxmpp.ComponentXMPP(
                         self._config.jid,
@@ -102,6 +104,7 @@ class Core(object):
     def _make_room_user(self, jid, name):
         room = self._get_room_from_jid(jid)
         if not room:
+            print 'No room for jid'
             return None
 
         return '{0}/{1}'.format(room, name)
@@ -162,19 +165,22 @@ class Core(object):
         
         # check for subscribed accounts
         user = self._book_keeper.user(event['from'].bare)
-        if user and user.accounts:
-            for account in user.accounts:
-                if not account.key or not account.secret:
+        if user and user[0].accounts:
+            for account in user[0].accounts:
+                if not account.auth_key or not account.auth_secret:
                     continue
                 
                 try:
+                    print 'Add connector for {0}'.format(account)
                     connector = TwitterConnector(self._book_keeper, account)
                     connector.perform_updates(self, True)
                     self._room_map[event['from'].bare]['services'].append(connector)
-                    
                 except Exception, e:
-#                    print 'Failed to add Connector: {0}'.format(e)
+                    print 'Failed to add Connector: {0}'.format(traceback.format_exc())
                     pass
+#                else:
+#                    self._xmpp.schedule(5, connector.perform_updates, (self, True))
+#                    self._room_map[event['from'].bare]['services'].append(connector)
 
     # --- callbacks used by the backend connectors
     def schedule(self, delay, callback, args):
@@ -185,6 +191,7 @@ class Core(object):
         mfrom = self._make_room_user(mto, mfrom)
         
         if not mfrom:
+            print 'mfrom == None'
             return
         
         message = self._xmpp.makeMessage(mto, mbody, None, 'groupchat', None, mfrom)#mbody, mfrom)

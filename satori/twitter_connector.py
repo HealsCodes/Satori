@@ -34,19 +34,21 @@ from config import Config
 class TwitterConnector(object):
     def __init__(self, book_keeper, account_data):
         self._book_keeper = book_keeper
-        self._account_data = account_data
+        self._account_data = book_keeper.account(account_data.user.jid, 
+                                                 account_data.service.name)
         self._service_data = None
         self._user_cache = {}
         
         if self._account_data:
+            self._account_data = self._account_data[0]
             self._jid = self._account_data.user.jid
             
             for service in Config.get().core.services:
                 if not 'tag' in service or not 'type' in service:
                     continue
                 
-                if service['tag'] == self._account_data.atype.tag and \
-                   service['type'] == self._account_data.atype.name:
+                if service['tag'] == self._account_data.service.name and \
+                   service['type'] == self._account_data.service.type_.name:
                    self._service_data = service
                    break
             
@@ -55,17 +57,17 @@ class TwitterConnector(object):
                 self._auth = tweepy.OAuthHandler(self._service_data['oAuthKey'],
                                                  self._service_data['oAuthSecret'])
                 if self._account_data and \
-                   self._account_data.key and \
-                   self._account_data.secret:
-                   self._auth.set_access_token(self._account_data.key,
-                                               self._account_data.secret)
+                   self._account_data.auth_key and \
+                   self._account_data.auth_secret:
+                   self._auth.set_access_token(self._account_data.auth_key,
+                                               self._account_data.auth_secret)
             except tweepy.TweepError, e:
                 raise
         
         elif self._service_data['type'] == 'twitter_BasicAuth':
             try:
-                self._auth = tweepy.BasicAuthHandler(self._account_data.key,
-                                                     self._account_data.secret)
+                self._auth = tweepy.BasicAuthHandler(self._account_data.auth_key,
+                                                     self._account_data.auth_secret)
             except tweepy.TweepError, e:
                 raise
         
@@ -75,25 +77,25 @@ class TwitterConnector(object):
             raise
     
     def _update_screen_status(self, name, nick, stamp, core):
+        tagged_name = '{1}| {0}'.format(name, self._service_data['tag'])
         if not nick in self._user_cache:
             self._user_cache[nick] = {}
-            self._user_cache[nick]['name'] = name
+            self._user_cache[nick]['name'] = tagged_name
             self._user_cache[nick]['away'] = False
             self._user_cache[nick]['last'] = stamp
-            core.send_user_presence(self._jid, name, True)
+            core.send_user_presence(self._jid, tagged_name, True)
         
         if self._user_cache[nick]['last'] - stamp > datetime.timedelta(0, 300, 0):
             if not self._user_cache[nick]['away']:
                 self._user_cache[nick]['away'] = True
-                core.send_user_presence(self._jid, name, False)
+                core.send_user_presence(self._jid, tagged_name, False)
         else:
             if self._user_cache[nick]['away']:
                 self._user_cache[nick]['away'] = False
-                core.send_user_presence(self._jid, name, True)
+                core.send_user_presence(self._jid, tagged_name, True)
         
         self._user_cache[nick]['last'] = stamp
-        
-
+    
     def handle_message(self, mto, mbody, is_direct=False):
         # it's up to us to decide if we actually *need* this message..
         try:
@@ -149,12 +151,19 @@ class TwitterConnector(object):
     def perform_updates(self, core, show_history=False):        
         user_msgs = []
         user_dms = []
-        status_ids = self._account_data.state.split(':')
+        account_data = self._book_keeper.account(self._jid,
+                                                 self._service_data['tag'])
+        if not account_data:
+            # FIXME: handle this!
+            return
+        account_data = account_data[0]
+        
+        status_ids = account_data.status.split(':')
         if len(status_ids) < 2:
             status_ids = ['0', '0']
         
         try:
-            if self._account_data.state != '0':
+            if account_data.status:
                 user_msgs = self._api.home_timeline(long(status_ids[0]))
                 #user_dms = self._api.direct_messages(long(status_ids[1]))
             else:
@@ -181,44 +190,50 @@ class TwitterConnector(object):
                 if not status.sender.screen_name in known_users:
                     known_users[status.sender.screen_name] = (status.sender.name,
                                                               status.created_at)
-                    
+            
             for name in known_users:
                 self._update_screen_status(known_users[name][0], name, 
                                            known_users[name][1], core)
-        
         for status in user_msgs:
+            tagged_name = '{1}| {0}'.format(status.author.name, self._service_data['tag'])
+            
             body = ''
             body = status.text + '\n'
             body += '[@{0}:{1}:{2} - from {3}]'.format(self._service_data['tag'],
                                                        status.author.screen_name,
                                                        status.id,
                                                        status.source)
-            self._update_screen_status('{1}/{0}'.format(self._service_data['tag'], status.author.name),
+            
+            self._update_screen_status(status.author.name,
                                        status.author.screen_name,
                                        status.created_at, core)
             
             if show_history:
-                core.send_room_message(self._jid, status.author.name, body, status.created_at)
+                core.send_room_message(self._jid, tagged_name, body, status.created_at)
             else:
-                core.send_room_message(self._jid, status.author.name, body)
+                core.send_room_message(self._jid, tagged_name, body)
             status_ids[0] = str(status.id)
             
         for status in user_dms:
+            tagged_name = '{1}| {0}'.format(status.sender.name, self._service_data['tag'])
             body = ''
             body = status.text + '\n'
             body += '[@{0}:{1}]'.format(status.sender.screen_name,
                                                    status.id)
-            self._update_screen_status('{1}/{0}'.format(self._service_data['tag'], status.sender.name),
+            self._update_screen_status(status.sender.name,
                                        status.sender.screen_name,
                                        status.created_at, core)
             
             if show_history:
-                core.send_user_message(self._jid, status.sender.name, body, status.created_at)
+                core.send_user_message(self._jid, tagged_name, body, status.created_at)
             else:
-                core.send_user_message(self._jid, status.sender.name, body)
+                core.send_user_message(self._jid, tagged_name, body)
             status_ids[1] = str(status.id)
         
-        self._account_data.state = ':'.join(status_ids)
+        account_data.status = ':'.join(status_ids)
+        self._book_keeper.commit(account_data)
+        self._book_keeper.release()
+        
         core.schedule(60, self.perform_updates, [core])
 
         
